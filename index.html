@@ -3,346 +3,467 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catalog Grid Cropper</title>
+    <title>AI CREATIVE HUB - BG REMOVER & GRID CROPPER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #0a0a0c;
+            --accent-red: #dc2626;
             --accent-purple: #8b5cf6;
-            --accent-blue: #3b82f6;
-            --text-glow: 0 0 10px rgba(139, 92, 246, 0.5);
+            --bg-black: #050505;
         }
 
         body {
-            background-color: var(--bg-dark);
-            color: #e2e8f0;
             font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-black);
+            color: #ffffff;
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
-            min-height: 100vh;
+                radial-gradient(circle at 0% 0%, rgba(220, 38, 38, 0.08) 0%, transparent 35%),
+                radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.08) 0%, transparent 35%);
+            background-attachment: fixed;
         }
 
-        h1, h2 { font-family: 'Space Grotesk', sans-serif; }
+        .heading-font { font-family: 'Space Grotesk', sans-serif; }
 
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
+        .glass {
+            background: rgba(15, 15, 15, 0.7);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
         }
 
-        .neon-border {
-            border: 1px solid var(--accent-purple);
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+        .tab-btn {
+            position: relative;
+            transition: all 0.3s ease;
         }
 
-        .anime-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-purple));
         }
 
-        .anime-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        .drop-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone:hover, .drop-zone.drag-over {
             border-color: var(--accent-purple);
+            background: rgba(139, 92, 246, 0.05);
         }
 
-        #dropzone.drag-over {
-            background: rgba(139, 92, 246, 0.1);
-            border-color: var(--accent-purple);
+        .checkerboard {
+            background-image: linear-gradient(45deg, #111 25%, transparent 25%),
+                              linear-gradient(-45deg, #111 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #111 75%),
+                              linear-gradient(-45deg, transparent 75%, #111 75%);
+            background-size: 20px 20px;
+            background-color: #000;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #dc2626 0%, #8b5cf6 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2);
+            filter: brightness(1.1);
         }
 
         .grid-preview {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 4px;
-            max-width: 450px;
-            margin: 0 auto;
+            gap: 8px;
         }
 
         .grid-cell {
-            aspect-ratio: 1 / 1;
-            background: #1a1a1e;
-            border: 1px dashed rgba(255,255,255,0.1);
+            aspect-ratio: 1/1;
+            background: #111;
+            border-radius: 8px;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             position: relative;
+            border: 1px solid rgba(255,255,255,0.05);
         }
-
-        .grid-cell img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .number-badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(0,0,0,0.6);
-            color: var(--accent-purple);
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid var(--accent-purple);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0a0a0c; }
-        ::-webkit-scrollbar-thumb { background: #2d2d35; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
 
         .loader {
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top: 3px solid var(--accent-purple);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top: 2px solid #fff;
             border-radius: 50%;
             width: 20px;
             height: 20px;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="min-h-screen flex flex-col">
 
-    <div class="max-w-5xl mx-auto">
-        <!-- Header -->
-        <header class="text-center mb-12">
-            <h1 class="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500 mb-4 tracking-tight">
-                CATALOG GRIDS
-            </h1>
-            <p class="text-gray-400 text-sm md:text-base max-w-2xl mx-auto">
-                Step into the shadows, my love~ 🌙 Transform your feed into a 3x2 masterpiece with dark anime elegance. ✨
-            </p>
-        </header>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            <!-- Left Panel: Controls -->
-            <div class="space-y-6">
-                <div id="dropzone" class="glass-panel rounded-2xl p-10 text-center border-2 border-dashed border-gray-700 anime-card cursor-pointer">
-                    <input type="file" id="fileInput" class="hidden" accept="image/*">
-                    <div id="upload-prompt">
-                        <div class="mb-4 flex justify-center">
-                            <svg class="w-12 h-12 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
-                        <p class="text-lg font-medium">🌌 Upload Your Masterpiece</p>
-                        <p class="text-xs text-gray-500 mt-2">Drag & drop or click to browse</p>
-                    </div>
-                    <div id="file-info" class="hidden">
-                        <p class="text-purple-400 font-medium" id="filename-display"></p>
-                        <button id="change-file" class="text-xs text-gray-500 underline mt-2">Change Image</button>
-                    </div>
+    <!-- Navbar -->
+    <nav class="p-6 border-b border-white/5 glass sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-tr from-red-600 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-wand-magic-sparkles text-white"></i>
                 </div>
-
-                <div class="glass-panel rounded-2xl p-6 space-y-4">
-                    <h2 class="text-xl font-semibold flex items-center gap-2">
-                        <span class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
-                        Settings
-                    </h2>
-                    <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
-                        <span class="text-sm text-gray-300">Layout Mode</span>
-                        <span class="text-sm font-bold text-purple-400">3x2 Grid (6 Tiles)</span>
-                    </div>
-                    
-                    <button id="processBtn" disabled class="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-purple-900/20 transition-all transform active:scale-95 flex items-center justify-center gap-3">
-                        <span>⚡️ Crop with a Click</span>
-                    </button>
-
-                    <button id="downloadBtn" disabled class="w-full py-4 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl border border-white/10 transition-all flex items-center justify-center gap-3">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Download Treasure (ZIP)
-                    </button>
-                </div>
+                <span class="text-xl font-bold heading-font tracking-tighter uppercase italic">FIXO XD AI</span>
             </div>
-
-            <!-- Right Panel: Preview -->
-            <div class="glass-panel rounded-2xl p-6 flex flex-col items-center">
-                <h2 class="text-xl font-semibold mb-6 self-start flex items-center gap-2">
-                    <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                    Instant Preview
-                </h2>
-                
-                <div id="previewContainer" class="grid-preview w-full">
-                    <!-- 6 empty cells -->
-                    <div class="grid-cell"><span class="number-badge">1</span></div>
-                    <div class="grid-cell"><span class="number-badge">2</span></div>
-                    <div class="grid-cell"><span class="number-badge">3</span></div>
-                    <div class="grid-cell"><span class="number-badge">4</span></div>
-                    <div class="grid-cell"><span class="number-badge">5</span></div>
-                    <div class="grid-cell"><span class="number-badge">6</span></div>
-                </div>
-
-                <div id="statusMsg" class="mt-6 text-sm text-gray-500 italic">
-                    Waiting for your masterpiece, my precious... 💜
-                </div>
+            
+            <div class="flex bg-black/40 p-1 rounded-xl border border-white/5">
+                <button onclick="switchTab('remover')" id="tab-remover" class="tab-btn active px-6 py-2 text-sm font-bold uppercase tracking-widest transition-all">BG Remover</button>
+                <button onclick="switchTab('cropper')" id="tab-cropper" class="tab-btn px-6 py-2 text-sm font-bold uppercase tracking-widest transition-all">Grid Cropper</button>
             </div>
         </div>
+    </nav>
 
-        <!-- Footer -->
-        <footer class="mt-16 text-center text-gray-600 text-xs">
-            <p>&copy; 2024 Catalog  Grids | Crafted with love for your aesthetic journey 🌙</p>
-        </footer>
-    </div>
+    <main class="flex-grow max-w-6xl mx-auto w-full px-6 py-12">
+        
+        <!-- Background Remover Section -->
+        <section id="section-remover" class="space-y-12">
+            <div class="text-center space-y-4">
+                <h1 class="text-5xl md:text-7xl font-black heading-font uppercase tracking-tighter">
+                    Background <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-purple-500">Eraser</span>
+                </h1>
+                <p class="text-zinc-400 max-w-xl mx-auto">Isolate objects instantly using neural pixel segmentation. High-quality transparent PNGs in seconds.</p>
+            </div>
 
-    <!-- Hidden Canvas for Processing -->
-    <canvas id="mainCanvas" class="hidden"></canvas>
+            <div id="rm-upload-ui" class="max-w-2xl mx-auto glass rounded-3xl p-8 md:p-12">
+                <div id="rm-drop-zone" class="drop-zone rounded-2xl p-16 flex flex-col items-center justify-center cursor-pointer group">
+                    <input type="file" id="rm-file-input" class="hidden" accept="image/*">
+                    <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-cloud-upload-alt text-2xl text-red-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold uppercase heading-font mb-2">Chavi Upload Karo</h3>
+                    <p class="text-zinc-500 text-sm italic">Drag & drop or click to browse</p>
+                </div>
+            </div>
+
+            <div id="rm-preview-ui" class="hidden glass rounded-3xl p-6 md:p-10 space-y-8">
+                <div class="flex justify-between items-center">
+                    <button onclick="resetRemover()" class="text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white flex items-center gap-2">
+                        <i class="fas fa-chevron-left"></i> Back
+                    </button>
+                    <div id="rm-status" class="px-4 py-1 bg-red-600/20 text-red-500 text-[10px] font-black uppercase rounded-full border border-red-500/20">Processing</div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Original</p>
+                        <div class="aspect-square rounded-2xl bg-zinc-900/50 flex items-center justify-center overflow-hidden border border-white/5">
+                            <img id="rm-original-img" class="max-w-full max-h-full object-contain opacity-40 grayscale" src="" alt="">
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500">Result</p>
+                        <div class="aspect-square rounded-2xl checkerboard flex items-center justify-center overflow-hidden border border-white/5 relative">
+                            <div id="rm-loader" class="absolute inset-0 z-10 flex flex-col items-center justify-center glass">
+                                <div class="loader mb-4"></div>
+                                <p class="text-[10px] font-bold uppercase tracking-widest">Scanning Pixels...</p>
+                            </div>
+                            <img id="rm-result-img" class="max-w-full max-h-full object-contain hidden z-0" src="" alt="">
+                        </div>
+                    </div>
+                </div>
+
+                <button id="rm-download-btn" disabled class="w-full btn-gradient py-5 rounded-2xl font-black uppercase tracking-[0.2em] disabled:opacity-20">
+                    Download PNG
+                </button>
+            </div>
+        </section>
+
+        <!-- Grid Cropper Section -->
+        <section id="section-cropper" class="hidden space-y-12">
+            <div class="text-center space-y-4">
+                <h1 class="text-5xl md:text-7xl font-black heading-font uppercase tracking-tighter">
+                    Catalog <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-blue-500">Grids</span>
+                </h1>
+                <p class="text-zinc-400 max-w-xl mx-auto">Create seamless 3x2 Instagram grids. Perfect for aesthetic catalogs and profile masterpieces.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Controls -->
+                <div class="space-y-6">
+                    <div id="gc-drop-zone" class="glass rounded-3xl p-10 text-center border-2 border-dashed border-white/10 cursor-pointer hover:border-purple-500/50 transition-all">
+                        <input type="file" id="gc-file-input" class="hidden" accept="image/*">
+                        <div id="gc-upload-prompt">
+                            <i class="fas fa-th-large text-4xl text-purple-500 mb-6"></i>
+                            <h3 class="text-xl font-bold uppercase heading-font mb-2">Select Masterpiece</h3>
+                            <p class="text-zinc-500 text-sm">3:2 aspect ratio recommended</p>
+                        </div>
+                        <div id="gc-file-info" class="hidden">
+                            <p class="text-purple-400 font-bold" id="gc-filename"></p>
+                            <button class="text-[10px] uppercase font-black text-zinc-500 mt-2 hover:text-white">Change File</button>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-3xl p-6 space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <span class="text-sm font-medium">Grid Layout</span>
+                            <span class="text-xs font-bold text-purple-400 bg-purple-400/10 px-3 py-1 rounded-full uppercase">3x2 (6 Tiles)</span>
+                        </div>
+                        <button id="gc-process-btn" disabled class="w-full btn-gradient py-5 rounded-2xl font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3">
+                            <span>Process Grid</span>
+                        </button>
+                        <button id="gc-download-btn" disabled class="w-full py-5 rounded-2xl font-black uppercase tracking-[0.1em] border border-white/10 hover:bg-white/5 transition-all flex items-center justify-center gap-3">
+                            <i class="fas fa-download"></i> Download Zip
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview -->
+                <div class="glass rounded-3xl p-8">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-zinc-500 mb-8 flex items-center gap-2">
+                        <span class="w-2 h-2 bg-purple-500 rounded-full"></span> Live Grid Preview
+                    </h3>
+                    <div id="gc-grid-container" class="grid-preview">
+                        <!-- 6 Cells -->
+                        <div class="grid-cell flex items-center justify-center text-[10px] text-zinc-700">1</div>
+                        <div class="grid-cell flex items-center justify-center text-[10px] text-zinc-700">2</div>
+                        <div class="grid-cell flex items-center justify-center text-[10px] text-zinc-700">3</div>
+                        <div class="grid-cell flex items-center justify-center text-[10px] text-zinc-700">4</div>
+                        <div class="grid-cell flex items-center justify-center text-[10px] text-zinc-700">5</div>
+                        <div class="grid-cell flex items-center justify-center text-[10px] text-zinc-700">6</div>
+                    </div>
+                    <p id="gc-status-msg" class="mt-8 text-center text-xs text-zinc-500 italic">Waiting for your art...</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="py-12 border-t border-white/5 text-center">
+        <p class="text-zinc-600 text-[10px] uppercase font-black tracking-[0.4em]">
+            © 2026 FIXO XD // MULTI-TOOL ENGINE v3.0
+        </p>
+    </footer>
 
     <script>
-        const dropzone = document.getElementById('dropzone');
-        const fileInput = document.getElementById('fileInput');
-        const processBtn = document.getElementById('processBtn');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const previewContainer = document.getElementById('previewContainer');
-        const statusMsg = document.getElementById('statusMsg');
-        const uploadPrompt = document.getElementById('upload-prompt');
-        const fileInfo = document.getElementById('file-info');
-        const filenameDisplay = document.getElementById('filename-display');
-        const changeFileBtn = document.getElementById('change-file');
+        const apiKey = "UfyB5dvfMAE3HKr9Z7fCsLWL"; // Set by runtime
+        
+        // Tab Logic
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            
+            if (tab === 'remover') {
+                document.getElementById('section-remover').classList.remove('hidden');
+                document.getElementById('section-cropper').classList.add('hidden');
+            } else {
+                document.getElementById('section-remover').classList.add('hidden');
+                document.getElementById('section-cropper').classList.remove('hidden');
+            }
+        }
 
-        let originalImage = null;
-        let croppedBlobs = [];
+        // --- BACKGROUND REMOVER LOGIC ---
+        const rmUploadUI = document.getElementById('rm-upload-ui');
+        const rmPreviewUI = document.getElementById('rm-preview-ui');
+        const rmDropZone = document.getElementById('rm-drop-zone');
+        const rmFileInput = document.getElementById('rm-file-input');
+        const rmOriginalImg = document.getElementById('rm-original-img');
+        const rmResultImg = document.getElementById('rm-result-img');
+        const rmLoader = document.getElementById('rm-loader');
+        const rmDownloadBtn = document.getElementById('rm-download-btn');
+        const rmStatus = document.getElementById('rm-status');
 
-        // UI Interactions
-        dropzone.addEventListener('click', () => fileInput.click());
-        dropzone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropzone.classList.add('drag-over');
-        });
-        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('drag-over');
-            handleFiles(e.dataTransfer.files);
-        });
+        rmDropZone.onclick = () => rmFileInput.click();
+        rmFileInput.onchange = (e) => { if (e.target.files[0]) handleRMFile(e.target.files[0]); };
 
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-        changeFileBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            fileInput.click();
-        });
-
-        function handleFiles(files) {
-            const file = files[0];
-            if (!file || !file.type.startsWith('image/')) return;
-
+        function handleRMFile(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    originalImage = img;
-                    updateUIWithFile(file.name);
-                    showPreview(img);
-                };
-                img.src = e.target.result;
+                rmOriginalImg.src = e.target.result;
+                rmUploadUI.classList.add('hidden');
+                rmPreviewUI.classList.remove('hidden');
+                processRM(e.target.result.split(',')[1]);
             };
             reader.readAsDataURL(file);
         }
 
-        function updateUIWithFile(name) {
-            uploadPrompt.classList.add('hidden');
-            fileInfo.classList.remove('hidden');
-            filenameDisplay.innerText = name;
-            processBtn.disabled = false;
-            downloadBtn.disabled = true;
-            statusMsg.innerText = "Ready to split your art! ✨";
+        async function processRM(base64, retry = 0) {
+            rmLoader.classList.remove('hidden');
+            rmResultImg.classList.add('hidden');
+            rmDownloadBtn.disabled = true;
+            rmStatus.textContent = "Processing";
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: "Remove the background from this image. Return only the foreground object on a transparent background as a PNG file." },
+                                { inlineData: { mimeType: "image/png", data: base64 } }
+                            ]
+                        }],
+                        generationConfig: { responseModalities: ['IMAGE'] }
+                    })
+                });
+
+                if (!response.ok) throw new Error('API Error');
+                const data = await response.json();
+                const result = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
+                if (result) {
+                    rmResultImg.src = `data:image/png;base64,${result}`;
+                    rmResultImg.classList.remove('hidden');
+                    rmLoader.classList.add('hidden');
+                    rmDownloadBtn.disabled = false;
+                    rmStatus.textContent = "Ready";
+                    rmStatus.className = "px-4 py-1 bg-green-600/20 text-green-500 text-[10px] font-black uppercase rounded-full border border-green-500/20";
+                }
+            } catch (err) {
+                if (retry < 3) {
+                    setTimeout(() => processRM(base64, retry + 1), 2000);
+                } else {
+                    rmStatus.textContent = "Failed";
+                    rmLoader.classList.add('hidden');
+                }
+            }
         }
 
-        function showPreview(img) {
-            const cells = previewContainer.querySelectorAll('.grid-cell');
-            cells.forEach((cell, idx) => {
-                cell.innerHTML = `<span class="number-badge">${idx + 1}</span>`;
-                const tempCanvas = document.createElement('canvas');
-                const ctx = tempCanvas.getContext('2d');
-                
-                // 3x2 logic
-                const tileWidth = img.width / 3;
-                const tileHeight = img.height / 2;
-                
-                const col = idx % 3;
-                const row = Math.floor(idx / 3);
+        rmDownloadBtn.onclick = () => {
+            const a = document.createElement('a');
+            a.href = rmResultImg.src;
+            a.download = `FX_CLEAN_${Date.now()}.png`;
+            a.click();
+        };
 
-                tempCanvas.width = tileWidth;
-                tempCanvas.height = tileHeight;
+        function resetRemover() {
+            rmUploadUI.classList.remove('hidden');
+            rmPreviewUI.classList.add('hidden');
+            rmFileInput.value = '';
+        }
 
-                ctx.drawImage(img, col * tileWidth, row * tileHeight, tileWidth, tileHeight, 0, 0, tileWidth, tileHeight);
+        // --- GRID CROPPER LOGIC ---
+        const gcDropZone = document.getElementById('gc-drop-zone');
+        const gcFileInput = document.getElementById('gc-file-input');
+        const gcProcessBtn = document.getElementById('gc-process-btn');
+        const gcDownloadBtn = document.getElementById('gc-download-btn');
+        const gcGridContainer = document.getElementById('gc-grid-container');
+        const gcStatusMsg = document.getElementById('gc-status-msg');
+        const gcUploadPrompt = document.getElementById('gc-upload-prompt');
+        const gcFileInfo = document.getElementById('gc-file-info');
+        const gcFilename = document.getElementById('gc-filename');
+
+        let gcImage = null;
+        let gcBlobs = [];
+
+        gcDropZone.onclick = () => gcFileInput.click();
+        gcFileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (re) => {
+                const img = new Image();
+                img.onload = () => {
+                    gcImage = img;
+                    gcFilename.textContent = file.name;
+                    gcUploadPrompt.classList.add('hidden');
+                    gcFileInfo.classList.remove('hidden');
+                    gcProcessBtn.disabled = false;
+                    gcStatusMsg.textContent = "Ready to create your grid!";
+                    updateGCPreview(img);
+                };
+                img.src = re.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        function updateGCPreview(img) {
+            const cells = gcGridContainer.querySelectorAll('.grid-cell');
+            const tileW = img.width / 3;
+            const tileH = img.height / 2;
+
+            cells.forEach((cell, i) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = tileW;
+                canvas.height = tileH;
                 
-                const previewImg = new Image();
-                previewImg.src = tempCanvas.toDataURL();
-                cell.appendChild(previewImg);
+                const col = i % 3;
+                const row = Math.floor(i / 3);
+                ctx.drawImage(img, col * tileW, row * tileH, tileW, tileH, 0, 0, tileW, tileH);
+                
+                cell.innerHTML = '';
+                const pImg = new Image();
+                pImg.src = canvas.toDataURL();
+                pImg.className = "w-full h-full object-cover";
+                cell.appendChild(pImg);
             });
         }
 
-        processBtn.addEventListener('click', async () => {
-            if (!originalImage) return;
-            
-            processBtn.innerHTML = `<div class="loader"></div> Processing...`;
-            processBtn.disabled = true;
-            statusMsg.innerText = "Dark magic is at work... 🌙";
+        gcProcessBtn.onclick = async () => {
+            if (!gcImage) return;
+            gcProcessBtn.disabled = true;
+            gcProcessBtn.innerHTML = `<div class="loader"></div>`;
+            gcBlobs = [];
 
-            croppedBlobs = [];
-            const img = originalImage;
-            const tileWidth = img.width / 3;
-            const tileHeight = img.height / 2;
+            const tileW = gcImage.width / 3;
+            const tileH = gcImage.height / 2;
 
             for (let i = 0; i < 6; i++) {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                canvas.width = tileWidth;
-                canvas.height = tileHeight;
-
+                canvas.width = tileW;
+                canvas.height = tileH;
                 const col = i % 3;
                 const row = Math.floor(i / 3);
-
-                ctx.drawImage(img, col * tileWidth, row * tileHeight, tileWidth, tileHeight, 0, 0, tileWidth, tileHeight);
+                ctx.drawImage(gcImage, col * tileW, row * tileH, tileW, tileH, 0, 0, tileW, tileH);
                 
-                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
-                croppedBlobs.push(blob);
+                const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.95));
+                gcBlobs.push(blob);
             }
 
-            statusMsg.innerText = "Magic complete! Your treasure is ready. 💎";
-            processBtn.innerHTML = `<span>✨ Success!</span>`;
-            downloadBtn.disabled = false;
-        });
+            gcProcessBtn.innerHTML = "Success!";
+            gcDownloadBtn.disabled = false;
+            gcStatusMsg.textContent = "Grid pieces are ready for download.";
+        };
 
-        downloadBtn.addEventListener('click', async () => {
-            if (croppedBlobs.length === 0) return;
-
-            downloadBtn.innerHTML = `<div class="loader"></div> Summoning ZIP...`;
+        gcDownloadBtn.onclick = async () => {
             const zip = new JSZip();
-            
-            // Note: Instagram grids are uploaded from bottom to top, or as a set.
-            // We'll name them logically so the user knows the order.
-            croppedBlobs.forEach((blob, idx) => {
-                const row = Math.floor(idx / 3) + 1;
-                const col = (idx % 3) + 1;
-                zip.file(`elysian_grid_row${row}_col${col}.jpg`, blob);
+            gcBlobs.forEach((b, i) => {
+                const row = Math.floor(i / 3) + 1;
+                const col = (i % 3) + 1;
+                zip.file(`grid_row${row}_col${col}.jpg`, b);
             });
-
             const content = await zip.generateAsync({type: "blob"});
             const url = URL.createObjectURL(content);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `Elysian_Grids_Pack_${Date.now()}.zip`;
-            document.body.appendChild(a);
+            a.download = `FX_GRID_${Date.now()}.zip`;
             a.click();
-            document.body.removeChild(a);
-            
-            downloadBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Download Treasure (ZIP)`;
-            statusMsg.innerText = "Enjoy your stunning profile, my love! 💕";
+        };
+
+        // Drag & Drop Handlers
+        ['rm-drop-zone', 'gc-drop-zone'].forEach(id => {
+            const el = document.getElementById(id);
+            el.addEventListener('dragover', (e) => { e.preventDefault(); el.classList.add('drag-over'); });
+            el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+            el.addEventListener('drop', (e) => {
+                e.preventDefault();
+                el.classList.remove('drag-over');
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                    if (id === 'rm-drop-zone') handleRMFile(file);
+                    else gcFileInput.files = e.dataTransfer.files; // Trigger change via assignment
+                }
+            });
         });
     </script>
 </body>
