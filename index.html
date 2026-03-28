@@ -3,468 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI CREATIVE HUB - BG REMOVER & GRID CROPPER</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>FIXO XD | Ultimate Downloader</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --accent-red: #dc2626;
-            --accent-purple: #8b5cf6;
-            --bg-black: #050505;
+            --bg: #030712;
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --accent: #00ff41;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #f3f4f6;
+            --text-dim: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg-black);
-            color: #ffffff;
+            background: var(--bg);
             background-image: 
-                radial-gradient(circle at 0% 0%, rgba(220, 38, 38, 0.08) 0%, transparent 35%),
-                radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.08) 0%, transparent 35%);
-            background-attachment: fixed;
+                radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.15) 0%, transparent 40%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        .heading-font { font-family: 'Space Grotesk', sans-serif; }
-
-        .glass {
-            background: rgba(15, 15, 15, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.3s ease;
+        /* Loading Screen */
+        #globalLoader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
         }
 
-        .tab-btn {
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--accent-red), var(--accent-purple));
-        }
-
-        .drop-zone {
-            border: 2px dashed rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .drop-zone:hover, .drop-zone.drag-over {
-            border-color: var(--accent-purple);
-            background: rgba(139, 92, 246, 0.05);
-        }
-
-        .checkerboard {
-            background-image: linear-gradient(45deg, #111 25%, transparent 25%),
-                              linear-gradient(-45deg, #111 25%, transparent 25%),
-                              linear-gradient(45deg, transparent 75%, #111 75%),
-                              linear-gradient(-45deg, transparent 75%, #111 75%);
-            background-size: 20px 20px;
-            background-color: #000;
-        }
-
-        .btn-gradient {
-            background: linear-gradient(135deg, #dc2626 0%, #8b5cf6 100%);
-            transition: all 0.3s ease;
-        }
-
-        .btn-gradient:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2);
-            filter: brightness(1.1);
-        }
-
-        .grid-preview {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-
-        .grid-cell {
-            aspect-ratio: 1/1;
-            background: #111;
-            border-radius: 8px;
-            overflow: hidden;
-            position: relative;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .loader {
-            border: 2px solid rgba(255,255,255,0.1);
-            border-top: 2px solid #fff;
+        .loader-ring {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 0.8s linear infinite;
+            animation: spin 1s linear infinite;
         }
 
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        /* Navbar */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 8%;
+            background: rgba(3, 7, 18, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            text-decoration: none;
+            color: white;
+            letter-spacing: -1px;
+        }
+
+        .logo span { color: var(--primary); }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Main Container */
+        .main-content {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Downloader Section Styles */
+        .downloader-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-active { display: block; }
+
+        h1 { font-size: 40px; margin-bottom: 10px; }
+        .subtitle { color: var(--text-dim); margin-bottom: 30px; }
+
+        /* Input Group */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            background: rgba(0,0,0,0.2);
+            padding: 8px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            padding: 15px;
+            font-size: 16px;
+        }
+
+        .btn-action {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 30px;
+            border-radius: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-action:hover { transform: scale(1.03); filter: brightness(1.1); }
+
+        /* Result Area */
+        .result-box {
+            margin-top: 30px;
+            display: none;
+            animation: scaleIn 0.4s ease;
+        }
+
+        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .dl-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            margin-bottom: 10px;
+            text-decoration: none;
+            color: white;
+            border: 1px solid var(--border);
+            transition: 0.3s;
+        }
+
+        .dl-item:hover { border-color: var(--primary); background: rgba(99, 102, 241, 0.1); }
+
+        /* Footer */
+        footer {
+            margin-top: 100px;
+            padding: 50px 8%;
+            border-top: 1px solid var(--border);
+            background: rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .social-icons a {
+            color: var(--text-dim);
+            font-size: 20px;
+            transition: 0.3s;
+        }
+
+        .social-icons a:hover { color: var(--primary); transform: translateY(-3px); }
+
+        @media (max-width: 600px) {
+            .input-group { flex-direction: column; background: transparent; border: none; padding: 0; }
+            input { background: var(--card-bg); border-radius: 15px; border: 1px solid var(--border); }
+            .btn-action { padding: 15px; border-radius: 15px; }
+            h1 { font-size: 28px; }
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
 
-    <!-- Navbar -->
-    <nav class="p-6 border-b border-white/5 glass sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-tr from-red-600 to-purple-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-wand-magic-sparkles text-white"></i>
-                </div>
-                <span class="text-xl font-bold heading-font tracking-tighter uppercase italic">FIXO XD AI</span>
-            </div>
-            
-            <div class="flex bg-black/40 p-1 rounded-xl border border-white/5">
-                <button onclick="switchTab('remover')" id="tab-remover" class="tab-btn active px-6 py-2 text-sm font-bold uppercase tracking-widest transition-all">BG Remover</button>
-                <button onclick="switchTab('cropper')" id="tab-cropper" class="tab-btn px-6 py-2 text-sm font-bold uppercase tracking-widest transition-all">Grid Cropper</button>
-            </div>
+    <div id="globalLoader">
+        <div class="loader-ring"></div>
+        <p style="margin-top: 15px; letter-spacing: 2px; color: var(--primary);">ANALYZING LINK...</p>
+    </div>
+
+    <nav>
+        <a href="#" class="logo">FIXO<span>XD</span></a>
+        <div class="nav-links">
+            <button class="nav-btn active" onclick="showSection('fb-sec', this)">Facebook</button>
+            <button class="nav-btn" onclick="showSection('tt-sec', this)">TikTok</button>
+            <button class="nav-btn" onclick="showSection('ig-sec', this)">Instagram</button>
         </div>
     </nav>
 
-    <main class="flex-grow max-w-6xl mx-auto w-full px-6 py-12">
+    <div class="main-content">
         
-        <!-- Background Remover Section -->
-        <section id="section-remover" class="space-y-12">
-            <div class="text-center space-y-4">
-                <h1 class="text-5xl md:text-7xl font-black heading-font uppercase tracking-tighter">
-                    Background <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-purple-500">Eraser</span>
-                </h1>
-                <p class="text-zinc-400 max-w-xl mx-auto">Isolate objects instantly using neural pixel segmentation. High-quality transparent PNGs in seconds.</p>
+        <section id="fb-sec" class="downloader-card section-active">
+            <i class="fab fa-facebook" style="font-size: 50px; color: #1877F2; margin-bottom: 20px;"></i>
+            <h1>Facebook Downloader</h1>
+            <p class="subtitle">Download FB Videos, Reels & Stories in High Quality</p>
+            <div class="input-group">
+                <input type="text" id="fbUrl" placeholder="Paste Facebook link here...">
+                <button class="btn-action" onclick="fetchFB()">ANALYZE</button>
             </div>
-
-            <div id="rm-upload-ui" class="max-w-2xl mx-auto glass rounded-3xl p-8 md:p-12">
-                <div id="rm-drop-zone" class="drop-zone rounded-2xl p-16 flex flex-col items-center justify-center cursor-pointer group">
-                    <input type="file" id="rm-file-input" class="hidden" accept="image/*">
-                    <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <i class="fas fa-cloud-upload-alt text-2xl text-red-500"></i>
-                    </div>
-                    <h3 class="text-xl font-bold uppercase heading-font mb-2">Chavi Upload Karo</h3>
-                    <p class="text-zinc-500 text-sm italic">Drag & drop or click to browse</p>
-                </div>
-            </div>
-
-            <div id="rm-preview-ui" class="hidden glass rounded-3xl p-6 md:p-10 space-y-8">
-                <div class="flex justify-between items-center">
-                    <button onclick="resetRemover()" class="text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white flex items-center gap-2">
-                        <i class="fas fa-chevron-left"></i> Back
-                    </button>
-                    <div id="rm-status" class="px-4 py-1 bg-red-600/20 text-red-500 text-[10px] font-black uppercase rounded-full border border-red-500/20">Processing</div>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div class="space-y-4">
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Original</p>
-                        <div class="aspect-square rounded-2xl bg-zinc-900/50 flex items-center justify-center overflow-hidden border border-white/5">
-                            <img id="rm-original-img" class="max-w-full max-h-full object-contain opacity-40 grayscale" src="" alt="">
-                        </div>
-                    </div>
-                    <div class="space-y-4">
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500">Result</p>
-                        <div class="aspect-square rounded-2xl checkerboard flex items-center justify-center overflow-hidden border border-white/5 relative">
-                            <div id="rm-loader" class="absolute inset-0 z-10 flex flex-col items-center justify-center glass">
-                                <div class="loader mb-4"></div>
-                                <p class="text-[10px] font-bold uppercase tracking-widest">Scanning Pixels...</p>
-                            </div>
-                            <img id="rm-result-img" class="max-w-full max-h-full object-contain hidden z-0" src="" alt="">
-                        </div>
-                    </div>
-                </div>
-
-                <button id="rm-download-btn" disabled class="w-full btn-gradient py-5 rounded-2xl font-black uppercase tracking-[0.2em] disabled:opacity-20">
-                    Download PNG
-                </button>
+            <div id="fbResult" class="result-box">
+                <img id="fbThumb" style="width: 100%; border-radius: 15px; margin-bottom: 15px;">
+                <div id="fbLinks"></div>
             </div>
         </section>
 
-        <!-- Grid Cropper Section -->
-        <section id="section-cropper" class="hidden space-y-12">
-            <div class="text-center space-y-4">
-                <h1 class="text-5xl md:text-7xl font-black heading-font uppercase tracking-tighter">
-                    Catalog <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-blue-500">Grids</span>
-                </h1>
-                <p class="text-zinc-400 max-w-xl mx-auto">Create seamless 3x2 Instagram grids. Perfect for aesthetic catalogs and profile masterpieces.</p>
+        <section id="tt-sec" class="downloader-card">
+            <i class="fab fa-tiktok" style="font-size: 50px; color: #fff; margin-bottom: 20px;"></i>
+            <h1>TikTok Downloader</h1>
+            <p class="subtitle">Download TikToks without watermark instantly</p>
+            <div class="input-group">
+                <input type="text" id="ttUrl" placeholder="Paste TikTok link here...">
+                <button class="btn-action" onclick="fetchTT()">DOWNLOAD</button>
             </div>
-
-            <div class="grid lg:grid-cols-2 gap-8">
-                <!-- Controls -->
-                <div class="space-y-6">
-                    <div id="gc-drop-zone" class="glass rounded-3xl p-10 text-center border-2 border-dashed border-white/10 cursor-pointer hover:border-purple-500/50 transition-all">
-                        <input type="file" id="gc-file-input" class="hidden" accept="image/*">
-                        <div id="gc-upload-prompt">
-                            <i class="fas fa-th-large text-4xl text-purple-500 mb-6"></i>
-                            <h3 class="text-xl font-bold uppercase heading-font mb-2">Select Masterpiece</h3>
-                            <p class="text-zinc-500 text-sm">3:2 aspect ratio recommended</p>
-                        </div>
-                        <div id="gc-file-info" class="hidden">
-                            <p class="text-purple-400 font-bold" id="gc-filename"></p>
-                            <button class="text-[10px] uppercase font-black text-zinc-500 mt-2 hover:text-white">Change File</button>
-                        </div>
-                    </div>
-
-                    <div class="glass rounded-3xl p-6 space-y-4">
-                        <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
-                            <span class="text-sm font-medium">Grid Layout</span>
-                            <span class="text-xs font-bold text-purple-400 bg-purple-400/10 px-3 py-1 rounded-full uppercase">3x2 (6 Tiles)</span>
-                        </div>
-                        <button id="gc-process-btn" disabled class="w-full btn-gradient py-5 rounded-2xl font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3">
-                            <span>Process Grid</span>
-                        </button>
-                        <button id="gc-download-btn" disabled class="w-full py-5 rounded-2xl font-black uppercase tracking-[0.1em] border border-white/10 hover:bg-white/5 transition-all flex items-center justify-center gap-3">
-                            <i class="fas fa-download"></i> Download Zip
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Preview -->
-                <div class="glass rounded-3xl p-8">
-                    <h3 class="text-xs font-black uppercase tracking-widest text-zinc-500 mb-8 flex items-center gap-2">
-                        <span class="w-2 h-2 bg-purple-500 rounded-full"></span> Live Grid Preview
-                    </h3>
-                    <div id="gc-grid-container" class="grid-preview">
-                        <!-- 6 Cells -->
-                        <div class="grid-cell flex items-center justify-center text-[10px] text-zinc-700">1</div>
-                        <div class="grid-cell flex items-center justify-center text-[10px] text-zinc-700">2</div>
-                        <div class="grid-cell flex items-center justify-center text-[10px] text-zinc-700">3</div>
-                        <div class="grid-cell flex items-center justify-center text-[10px] text-zinc-700">4</div>
-                        <div class="grid-cell flex items-center justify-center text-[10px] text-zinc-700">5</div>
-                        <div class="grid-cell flex items-center justify-center text-[10px] text-zinc-700">6</div>
-                    </div>
-                    <p id="gc-status-msg" class="mt-8 text-center text-xs text-zinc-500 italic">Waiting for your art...</p>
-                </div>
+            <div id="ttResult" class="result-box">
+                <div id="ttLinks"></div>
             </div>
         </section>
 
-    </main>
+        <section id="ig-sec" class="downloader-card">
+            <i class="fab fa-instagram" style="font-size: 50px; color: #E4405F; margin-bottom: 20px;"></i>
+            <h1>Instagram Downloader</h1>
+            <p class="subtitle">Save Instagram Reels and Videos in seconds</p>
+            <div class="input-group">
+                <input type="text" id="igUrl" placeholder="Paste Instagram Reel link...">
+                <button class="btn-action" onclick="fetchIG()">FETCH</button>
+            </div>
+            <div id="igResult" class="result-box">
+                <video id="igPreview" controls style="width: 100%; border-radius: 15px; background: #000;"></video>
+                <a id="igDlBtn" class="dl-item" style="margin-top: 15px; justify-content: center; background: var(--primary);" download>
+                    <i class="fas fa-download"></i> &nbsp; Download Video
+                </a>
+            </div>
+        </section>
 
-    <footer class="py-12 border-t border-white/5 text-center">
-        <p class="text-zinc-600 text-[10px] uppercase font-black tracking-[0.4em]">
-            © 2026 FIXO XD // MULTI-TOOL ENGINE v3.0
-        </p>
+    </div>
+
+    <footer>
+        <div class="logo">FIXO<span>XD</span></div>
+        <p style="color: var(--text-dim); margin-top: 10px;">The ultimate destination for social media media saving.</p>
+        <div class="social-icons">
+            <a href="https://www.facebook.com/fixoeditz"><i class="fab fa-facebook"></i></a>
+            <a href="https://whatsapp.com/channel/0029VbAbJCO35fLy2OzH9y1I"><i class="fab fa-whatsapp"></i></a>
+            <a href="t.me/fixoxd"><i class="fab fa-telegram"></i></a>
+            <a href="https://github.com/fixoxd20"><i class="fab fa-github"></i></a>
+        </div>
+        <p class="copyright" style="font-size: 13px; color: var(--text-dim);">&copy; 2026 FIXO XD. All Rights Reserved.</p>
     </footer>
 
     <script>
-        const apiKey = "UfyB5dvfMAE3HKr9Z7fCsLWL"; // Set by runtime
-        
-        // Tab Logic
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
+        const loader = document.getElementById('globalLoader');
+
+        function showSection(id, btn) {
+            document.querySelectorAll('.downloader-card').forEach(s => s.classList.remove('section-active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('section-active');
+            btn.classList.add('active');
+        }
+
+        // Facebook Fetch
+        async function fetchFB() {
+            const url = document.getElementById('fbUrl').value;
+            if(!url) return alert("Please paste a link!");
+            loader.style.display = 'flex';
             
-            if (tab === 'remover') {
-                document.getElementById('section-remover').classList.remove('hidden');
-                document.getElementById('section-cropper').classList.add('hidden');
-            } else {
-                document.getElementById('section-remover').classList.add('hidden');
-                document.getElementById('section-cropper').classList.remove('hidden');
-            }
+            try {
+                const res = await fetch(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(url)}`);
+                const json = await res.json();
+                if(json.status && json.data) {
+                    const data = json.data;
+                    document.getElementById('fbThumb').src = data.thumbnail;
+                    let html = '';
+                    data.downloads.forEach(dl => {
+                        html += `<a href="${dl.url}" target="_blank" class="dl-item">
+                            <span><i class="fas fa-video"></i> ${dl.quality} (${dl.type})</span>
+                            <i class="fas fa-download"></i>
+                        </a>`;
+                    });
+                    document.getElementById('fbLinks').innerHTML = html;
+                    document.getElementById('fbResult').style.display = 'block';
+                }
+            } catch(e) { alert("Error fetching video!"); }
+            loader.style.display = 'none';
         }
 
-        // --- BACKGROUND REMOVER LOGIC ---
-        const rmUploadUI = document.getElementById('rm-upload-ui');
-        const rmPreviewUI = document.getElementById('rm-preview-ui');
-        const rmDropZone = document.getElementById('rm-drop-zone');
-        const rmFileInput = document.getElementById('rm-file-input');
-        const rmOriginalImg = document.getElementById('rm-original-img');
-        const rmResultImg = document.getElementById('rm-result-img');
-        const rmLoader = document.getElementById('rm-loader');
-        const rmDownloadBtn = document.getElementById('rm-download-btn');
-        const rmStatus = document.getElementById('rm-status');
-
-        rmDropZone.onclick = () => rmFileInput.click();
-        rmFileInput.onchange = (e) => { if (e.target.files[0]) handleRMFile(e.target.files[0]); };
-
-        function handleRMFile(file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                rmOriginalImg.src = e.target.result;
-                rmUploadUI.classList.add('hidden');
-                rmPreviewUI.classList.remove('hidden');
-                processRM(e.target.result.split(',')[1]);
-            };
-            reader.readAsDataURL(file);
-        }
-
-        async function processRM(base64, retry = 0) {
-            rmLoader.classList.remove('hidden');
-            rmResultImg.classList.add('hidden');
-            rmDownloadBtn.disabled = true;
-            rmStatus.textContent = "Processing";
+        // TikTok Fetch
+        async function fetchTT() {
+            const url = document.getElementById('ttUrl').value;
+            if(!url) return alert("Please paste a link!");
+            loader.style.display = 'flex';
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: "Remove the background from this image. Return only the foreground object on a transparent background as a PNG file." },
-                                { inlineData: { mimeType: "image/png", data: base64 } }
-                            ]
-                        }],
-                        generationConfig: { responseModalities: ['IMAGE'] }
-                    })
-                });
-
-                if (!response.ok) throw new Error('API Error');
-                const data = await response.json();
-                const result = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-
-                if (result) {
-                    rmResultImg.src = `data:image/png;base64,${result}`;
-                    rmResultImg.classList.remove('hidden');
-                    rmLoader.classList.add('hidden');
-                    rmDownloadBtn.disabled = false;
-                    rmStatus.textContent = "Ready";
-                    rmStatus.className = "px-4 py-1 bg-green-600/20 text-green-500 text-[10px] font-black uppercase rounded-full border border-green-500/20";
+                const res = await fetch(`https://tikwm.com/api/?url=${encodeURIComponent(url)}`);
+                const json = await res.json();
+                if(json.code === 0) {
+                    const d = json.data;
+                    document.getElementById('ttLinks').innerHTML = `
+                        <a href="${d.play}" target="_blank" class="dl-item"><span>No Watermark</span> <i class="fas fa-download"></i></a>
+                        <a href="${d.wmplay}" target="_blank" class="dl-item"><span>With Watermark</span> <i class="fas fa-download"></i></a>
+                        <a href="${d.music}" target="_blank" class="dl-item"><span>Audio (MP3)</span> <i class="fas fa-music"></i></a>
+                    `;
+                    document.getElementById('ttResult').style.display = 'block';
                 }
-            } catch (err) {
-                if (retry < 3) {
-                    setTimeout(() => processRM(base64, retry + 1), 2000);
-                } else {
-                    rmStatus.textContent = "Failed";
-                    rmLoader.classList.add('hidden');
-                }
-            }
+            } catch(e) { alert("TikTok service unavailable!"); }
+            loader.style.display = 'none';
         }
 
-        rmDownloadBtn.onclick = () => {
-            const a = document.createElement('a');
-            a.href = rmResultImg.src;
-            a.download = `FX_CLEAN_${Date.now()}.png`;
-            a.click();
-        };
+        // Instagram Fetch
+        async function fetchIG() {
+            const url = document.getElementById('igUrl').value;
+            if(!url) return alert("Please paste a link!");
+            loader.style.display = 'flex';
 
-        function resetRemover() {
-            rmUploadUI.classList.remove('hidden');
-            rmPreviewUI.classList.add('hidden');
-            rmFileInput.value = '';
-        }
-
-        // --- GRID CROPPER LOGIC ---
-        const gcDropZone = document.getElementById('gc-drop-zone');
-        const gcFileInput = document.getElementById('gc-file-input');
-        const gcProcessBtn = document.getElementById('gc-process-btn');
-        const gcDownloadBtn = document.getElementById('gc-download-btn');
-        const gcGridContainer = document.getElementById('gc-grid-container');
-        const gcStatusMsg = document.getElementById('gc-status-msg');
-        const gcUploadPrompt = document.getElementById('gc-upload-prompt');
-        const gcFileInfo = document.getElementById('gc-file-info');
-        const gcFilename = document.getElementById('gc-filename');
-
-        let gcImage = null;
-        let gcBlobs = [];
-
-        gcDropZone.onclick = () => gcFileInput.click();
-        gcFileInput.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (re) => {
-                const img = new Image();
-                img.onload = () => {
-                    gcImage = img;
-                    gcFilename.textContent = file.name;
-                    gcUploadPrompt.classList.add('hidden');
-                    gcFileInfo.classList.remove('hidden');
-                    gcProcessBtn.disabled = false;
-                    gcStatusMsg.textContent = "Ready to create your grid!";
-                    updateGCPreview(img);
-                };
-                img.src = re.target.result;
-            };
-            reader.readAsDataURL(file);
-        };
-
-        function updateGCPreview(img) {
-            const cells = gcGridContainer.querySelectorAll('.grid-cell');
-            const tileW = img.width / 3;
-            const tileH = img.height / 2;
-
-            cells.forEach((cell, i) => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = tileW;
-                canvas.height = tileH;
-                
-                const col = i % 3;
-                const row = Math.floor(i / 3);
-                ctx.drawImage(img, col * tileW, row * tileH, tileW, tileH, 0, 0, tileW, tileH);
-                
-                cell.innerHTML = '';
-                const pImg = new Image();
-                pImg.src = canvas.toDataURL();
-                pImg.className = "w-full h-full object-cover";
-                cell.appendChild(pImg);
-            });
-        }
-
-        gcProcessBtn.onclick = async () => {
-            if (!gcImage) return;
-            gcProcessBtn.disabled = true;
-            gcProcessBtn.innerHTML = `<div class="loader"></div>`;
-            gcBlobs = [];
-
-            const tileW = gcImage.width / 3;
-            const tileH = gcImage.height / 2;
-
-            for (let i = 0; i < 6; i++) {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = tileW;
-                canvas.height = tileH;
-                const col = i % 3;
-                const row = Math.floor(i / 3);
-                ctx.drawImage(gcImage, col * tileW, row * tileH, tileW, tileH, 0, 0, tileW, tileH);
-                
-                const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.95));
-                gcBlobs.push(blob);
-            }
-
-            gcProcessBtn.innerHTML = "Success!";
-            gcDownloadBtn.disabled = false;
-            gcStatusMsg.textContent = "Grid pieces are ready for download.";
-        };
-
-        gcDownloadBtn.onclick = async () => {
-            const zip = new JSZip();
-            gcBlobs.forEach((b, i) => {
-                const row = Math.floor(i / 3) + 1;
-                const col = (i % 3) + 1;
-                zip.file(`grid_row${row}_col${col}.jpg`, b);
-            });
-            const content = await zip.generateAsync({type: "blob"});
-            const url = URL.createObjectURL(content);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `FX_GRID_${Date.now()}.zip`;
-            a.click();
-        };
-
-        // Drag & Drop Handlers
-        ['rm-drop-zone', 'gc-drop-zone'].forEach(id => {
-            const el = document.getElementById(id);
-            el.addEventListener('dragover', (e) => { e.preventDefault(); el.classList.add('drag-over'); });
-            el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
-            el.addEventListener('drop', (e) => {
-                e.preventDefault();
-                el.classList.remove('drag-over');
-                const file = e.dataTransfer.files[0];
-                if (file) {
-                    if (id === 'rm-drop-zone') handleRMFile(file);
-                    else gcFileInput.files = e.dataTransfer.files; // Trigger change via assignment
+            try {
+                const res = await fetch(`https://instagram.f-a-k.workers.dev/?url=${encodeURIComponent(url)}`);
+                const json = await res.json();
+                if(json.success) {
+                    const videoUrl = json.urls[0];
+                    document.getElementById('igPreview').src = videoUrl;
+                    document.getElementById('igDlBtn').href = videoUrl;
+                    document.getElementById('igResult').style.display = 'block';
                 }
-            });
-        });
+            } catch(e) { alert("Instagram fetch failed!"); }
+            loader.style.display = 'none';
+        }
     </script>
 </body>
-    </html>
+            </html>
